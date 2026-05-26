@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Schaapjes Klok</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --card: #16213e;
+      --accent: #e94560;
+      --soft: #0f3460;
+      --text: #eaeaea;
+      --muted: #8892b0;
+      --green: #4ecca3;
+      --red: #e94560;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Nunito', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 16px;
+      padding: 16px 12px 32px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.5rem, 6vw, 2.2rem);
+      letter-spacing: 2px;
+      color: var(--green);
+      text-shadow: 0 0 20px rgba(78,204,163,0.4);
+      margin-top: 4px;
+    }
+
+    /* ── CLOCK ── */
+    .clock-wrap {
+      background: var(--card);
+      border-radius: 20px;
+      padding: clamp(16px, 4vw, 28px) clamp(20px, 6vw, 48px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    #clock-display {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2.8rem, 14vw, 5.5rem);
+      letter-spacing: 4px;
+      color: var(--text);
+      transition: color 0.6s;
+      line-height: 1;
+    }
+
+    #date-display {
+      font-size: clamp(0.75rem, 3vw, 0.95rem);
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    #tz-display {
+      font-size: clamp(0.7rem, 2.5vw, 0.82rem);
+      color: var(--green);
+      margin-top: 2px;
+      opacity: 0.8;
+    }
+
+    /* ── SHEEP ── */
+    .sheep-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #sheep-status {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+      letter-spacing: 1px;
+      transition: color 0.6s;
+      color: var(--muted);
+    }
+
+    svg#sheep {
+      width: clamp(110px, 36vw, 150px);
+      height: auto;
+      filter: drop-shadow(0 6px 24px rgba(0,0,0,0.4));
+      transition: filter 0.6s;
+    }
+
+    .sheep-body-fill { transition: fill 0.6s; }
+    .sheep-face-fill { transition: fill 0.6s; }
+    .eye-open        { transition: opacity 0.4s; }
+    .eye-closed      { transition: opacity 0.4s; }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .control-group {
+      background: var(--card);
+      border-radius: 16px;
+      padding: clamp(14px, 4vw, 20px) clamp(16px, 4vw, 24px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .control-group h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+      color: var(--green);
+      letter-spacing: 1px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: clamp(0.78rem, 3vw, 0.85rem);
+      color: var(--muted);
+      min-width: 64px;
+    }
+
+    input[type="time"],
+    input[type="number"],
+    select {
+      background: var(--soft);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(0.9rem, 3.5vw, 1rem);
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="time"]   { width: clamp(110px, 36vw, 130px); }
+    input[type="number"] { width: 72px; }
+
+    select {
+      width: 100%;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892b0' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    input[type="time"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--green);
+    }
+
+    .toggle-btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(0.82rem, 3vw, 0.9rem);
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.5px;
+      touch-action: manipulation;
+      min-height: 40px;
+    }
+
+    .toggle-btn:active { transform: scale(0.96); }
+    .btn-on  { background: var(--green); color: #1a1a2e; }
+    .btn-off { background: var(--soft);  color: var(--muted); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(0.9rem, 3.5vw, 1rem);
+      padding: 10px 22px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      touch-action: manipulation;
+      min-height: 44px;
+    }
+    .btn-primary:active { transform: scale(0.96); }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .badge-active   { background: rgba(78,204,163,0.15); color: var(--green); }
+    .badge-inactive { background: rgba(136,146,176,0.15); color: var(--muted); }
+
+    /* ── ALARM RING ── */
+    @keyframes ring {
+      0%,100% { transform: rotate(0deg); }
+      20%     { transform: rotate(-8deg); }
+      40%     { transform: rotate(8deg); }
+      60%     { transform: rotate(-6deg); }
+      80%     { transform: rotate(6deg); }
+    }
+    .ringing svg#sheep { animation: ring 0.5s infinite; }
+
+    /* ── ZZZ ── */
+    .zzz {
+      position: absolute;
+      font-family: 'Fredoka One', cursive;
+      color: var(--green);
+      opacity: 0;
+      pointer-events: none;
+      animation: floatZ 2s ease-in-out infinite;
+    }
+    .zzz:nth-child(1) { font-size: 0.85rem; animation-delay: 0s; }
+    .zzz:nth-child(2) { font-size: 1.05rem; animation-delay: 0.6s; }
+    .zzz:nth-child(3) { font-size: 1.25rem; animation-delay: 1.2s; }
+
+    @keyframes floatZ {
+      0%   { opacity: 0; transform: translate(0,0) rotate(-5deg); }
+      30%  { opacity: 1; }
+      100% { opacity: 0; transform: translate(28px,-55px) rotate(15deg); }
+    }
+
+    #snooze-btn { display: none; }
+
+    footer {
+      font-size: 0.72rem;
+      color: var(--muted);
+      opacity: 0.45;
+      margin-top: 4px;
+    }
+
+    /* ── MOBILE: tighter on small screens ── */
+    @media (max-width: 380px) {
+      body { gap: 12px; padding: 10px 8px 24px; }
+      .row { gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐑 Schaapjes Klok</h1>
+
+  <!-- CLOCK -->
+  <div class="clock-wrap">
+    <div id="clock-display">00:00:00</div>
+    <div id="date-display">maandag 1 januari</div>
+    <div id="tz-display">—</div>
+  </div>
+
+  <!-- SHEEP -->
+  <div class="sheep-wrap" id="sheep-container">
+    <div id="zzz-wrap" style="position:relative;height:0;width:0;left:65px;top:8px;">
+      <span class="zzz" style="display:none">z</span>
+      <span class="zzz" style="display:none">z</span>
+      <span class="zzz" style="display:none">z</span>
+    </div>
+    <svg id="sheep" viewBox="0 0 160 140" xmlns="http://www.w3.org/2000/svg">
+      <circle class="sheep-body-fill" cx="80" cy="80" r="42" fill="#f0f0f0"/>
+      <circle class="sheep-body-fill" cx="54" cy="68" r="26" fill="#f0f0f0"/>
+      <circle class="sheep-body-fill" cx="106" cy="68" r="26" fill="#f0f0f0"/>
+      <circle class="sheep-body-fill" cx="80" cy="54" r="24" fill="#f0f0f0"/>
+      <circle class="sheep-body-fill" cx="62" cy="56" r="20" fill="#f0f0f0"/>
+      <circle class="sheep-body-fill" cx="98" cy="56" r="20" fill="#f0f0f0"/>
+      <circle class="sheep-body-fill" cx="80" cy="44" r="18" fill="#f0f0f0"/>
+      <ellipse class="sheep-face-fill" cx="80" cy="30" rx="22" ry="20" fill="#ffe0c8"/>
+      <ellipse class="sheep-face-fill" cx="57" cy="28" rx="9" ry="6" fill="#ffe0c8" transform="rotate(-25,57,28)"/>
+      <ellipse class="sheep-face-fill" cx="103" cy="28" rx="9" ry="6" fill="#ffe0c8" transform="rotate(25,103,28)"/>
+      <g class="eye-open" id="eyes-open">
+        <circle cx="72" cy="26" r="5" fill="#2d2d2d"/>
+        <circle cx="88" cy="26" r="5" fill="#2d2d2d"/>
+        <circle cx="73.5" cy="24.5" r="1.5" fill="white"/>
+        <circle cx="89.5" cy="24.5" r="1.5" fill="white"/>
+      </g>
+      <g class="eye-closed" id="eyes-closed" opacity="0">
+        <path d="M68 26 Q72 22 76 26" stroke="#2d2d2d" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M84 26 Q88 22 92 26" stroke="#2d2d2d" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="80" cy="34" rx="5" ry="3" fill="#f4a7b9"/>
+      <line x1="78" y1="34" x2="78" y2="37" stroke="#c47" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="82" y1="34" x2="82" y2="37" stroke="#c47" stroke-width="1.2" stroke-linecap="round"/>
+      <rect class="sheep-face-fill" x="60" y="112" width="12" height="22" rx="6" fill="#ffe0c8"/>
+      <rect class="sheep-face-fill" x="88" y="112" width="12" height="22" rx="6" fill="#ffe0c8"/>
+      <rect class="sheep-face-fill" x="50" y="108" width="11" height="20" rx="5" fill="#ffe0c8"/>
+      <rect class="sheep-face-fill" x="99" y="108" width="11" height="20" rx="5" fill="#ffe0c8"/>
+    </svg>
+    <div id="sheep-status">Schaapje is wakker 🌞</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+
+    <!-- Timezone -->
+    <div class="control-group">
+      <h2>🌍 Tijdzone</h2>
+      <div class="row">
+        <label>Zone</label>
+        <select id="tz-select" onchange="updateTimezone()"></select>
+      </div>
+    </div>
+
+    <!-- Sleep -->
+    <div class="control-group">
+      <h2>😴 Slaaptimer</h2>
+      <div class="row">
+        <label>Slapen om</label>
+        <input type="time" id="sleep-time" value="22:00" />
+        <button class="toggle-btn btn-off" id="sleep-toggle" onclick="toggleSleep()">Uit</button>
+        <span class="badge badge-inactive" id="sleep-badge">inactief</span>
+      </div>
+    </div>
+
+    <!-- Alarm -->
+    <div class="control-group">
+      <h2>⏰ Wekker</h2>
+      <div class="row">
+        <label>Wekken om</label>
+        <input type="time" id="alarm-time" value="07:00" />
+        <button class="toggle-btn btn-off" id="alarm-toggle" onclick="toggleAlarm()">Uit</button>
+        <span class="badge badge-inactive" id="alarm-badge">inactief</span>
+      </div>
+      <div class="row">
+        <label>Snooze</label>
+        <input type="number" id="snooze-min" value="5" min="1" max="30" />
+        <span style="font-size:0.82rem;color:var(--muted)">min</span>
+      </div>
+      <div class="row">
+        <button class="btn-primary" id="snooze-btn" onclick="snooze()">💤 Snooze</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Schaapjes Klok — zet me op GitHub Pages!</footer>
+
+<script>
+  // ── Timezone list ────────────────────────────────────────────────────────
+  const TIMEZONES = [
+    { label: '🌍 Amsterdam (Europa/Amsterdam)',   value: 'Europe/Amsterdam' },
+    { label: '🌍 Londen (Europa/London)',          value: 'Europe/London' },
+    { label: '🌍 Parijs (Europa/Paris)',           value: 'Europe/Paris' },
+    { label: '🌍 Berlijn (Europa/Berlin)',         value: 'Europe/Berlin' },
+    { label: '🌍 Moskou (Europa/Moscow)',          value: 'Europe/Moscow' },
+    { label: '🌏 Dubai (Asia/Dubai)',              value: 'Asia/Dubai' },
+    { label: '🌏 Tokio (Asia/Tokyo)',              value: 'Asia/Tokyo' },
+    { label: '🌏 Shanghai (Asia/Shanghai)',        value: 'Asia/Shanghai' },
+    { label: '🌏 Bangkok (Asia/Bangkok)',          value: 'Asia/Bangkok' },
+    { label: '🌏 Kolkata (Asia/Kolkata)',          value: 'Asia/Kolkata' },
+    { label: '🌎 New York (America/New_York)',     value: 'America/New_York' },
+    { label: '🌎 Chicago (America/Chicago)',       value: 'America/Chicago' },
+    { label: '🌎 Denver (America/Denver)',         value: 'America/Denver' },
+    { label: '🌎 Los Angeles (America/LA)',        value: 'America/Los_Angeles' },
+    { label: '🌎 São Paulo (America/Sao_Paulo)',   value: 'America/Sao_Paulo' },
+    { label: '🌎 Buenos Aires (America/BA)',       value: 'America/Argentina/Buenos_Aires' },
+    { label: '🌍 Kaapstad (Africa/Johannesburg)', value: 'Africa/Johannesburg' },
+    { label: '🌏 Sydney (Australia/Sydney)',       value: 'Australia/Sydney' },
+    { label: '🌏 Auckland (Pacific/Auckland)',     value: 'Pacific/Auckland' },
+    { label: '⚙️ Apparaat lokale tijd',            value: '__local__' },
+  ];
+
+  const tzSelect = document.getElementById('tz-select');
+
+  // Populate dropdown
+  TIMEZONES.forEach(tz => {
+    const opt = document.createElement('option');
+    opt.value = tz.value;
+    opt.textContent = tz.label;
+    tzSelect.appendChild(opt);
+  });
+
+  // Auto-detect user's timezone and pre-select
+  let selectedTZ = '__local__';
+  try {
+    const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const match = TIMEZONES.find(t => t.value === userTZ);
+    if (match) {
+      selectedTZ = userTZ;
+      tzSelect.value = userTZ;
+    } else {
+      tzSelect.value = '__local__';
+    }
+  } catch(e) {
+    tzSelect.value = '__local__';
+  }
+
+  function updateTimezone() {
+    selectedTZ = tzSelect.value;
+  }
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let sleepEnabled = false;
+  let alarmEnabled = false;
+  let isSleeping   = false;
+  let alarmRinging = false;
+  let snoozeUntil  = null;
+  let greenTimer   = null;   // timeout handle for green → neutral
+
+  const DAYS_NL   = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+  const MONTHS_NL = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+
+  // ── DOM refs ─────────────────────────────────────────────────────────────
+  const clockEl    = document.getElementById('clock-display');
+  const dateEl     = document.getElementById('date-display');
+  const tzEl       = document.getElementById('tz-display');
+  const statusEl   = document.getElementById('sheep-status');
+  const container  = document.getElementById('sheep-container');
+  const eyesOpen   = document.getElementById('eyes-open');
+  const eyesClosed = document.getElementById('eyes-closed');
+  const zzzWrap    = document.getElementById('zzz-wrap');
+  const zzzSpans   = zzzWrap.querySelectorAll('.zzz');
+  const snoozeBtn  = document.getElementById('snooze-btn');
+  const bodyFills  = document.querySelectorAll('.sheep-body-fill');
+  const faceFills  = document.querySelectorAll('.sheep-face-fill');
+
+  // ── Clock tick ───────────────────────────────────────────────────────────
+  function getNow() {
+    if (selectedTZ === '__local__') return new Date();
+    // Use Intl to get the time in the chosen zone
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: selectedTZ,
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit',
+      hour12: false
+    }).formatToParts(new Date());
+    const p = {};
+    parts.forEach(x => p[x.type] = x.value);
+    // Build a Date that represents local wall-clock time in that zone
+    return new Date(
+      `${p.year}-${p.month}-${p.day}T${p.hour === '24' ? '00' : p.hour}:${p.minute}:${p.second}`
+    );
+  }
+
+  function tick() {
+    const now = getNow();
+    const h   = String(now.getHours()).padStart(2,'0');
+    const m   = String(now.getMinutes()).padStart(2,'0');
+    const s   = String(now.getSeconds()).padStart(2,'0');
+
+    clockEl.textContent = `${h}:${m}:${s}`;
+    dateEl.textContent  = `${DAYS_NL[now.getDay()]} ${now.getDate()} ${MONTHS_NL[now.getMonth()]}`;
+
+    // Show timezone label
+    if (selectedTZ === '__local__') {
+      tzEl.textContent = `lokale tijd`;
+    } else {
+      const label = TIMEZONES.find(t => t.value === selectedTZ)?.label || selectedTZ;
+      // Strip emoji prefix for display
+      tzEl.textContent = selectedTZ.replace('_', ' ');
+    }
+
+    const hhmm = `${h}:${m}`;
+    const ss   = now.getSeconds();
+
+    // Check sleep trigger
+    if (sleepEnabled && !isSleeping && hhmm === document.getElementById('sleep-time').value && ss === 0) {
+      setSleeping(true);
+    }
+
+    // Check alarm trigger
+    if (alarmEnabled && !alarmRinging) {
+      const shouldRing = snoozeUntil
+        ? new Date() >= snoozeUntil
+        : (hhmm === document.getElementById('alarm-time').value && ss === 0);
+      if (shouldRing) {
+        if (snoozeUntil) snoozeUntil = null;
+        triggerAlarm();
+      }
+    }
+  }
+
+  setInterval(tick, 1000);
+  tick();
+
+  // ── Sleep / wake ─────────────────────────────────────────────────────────
+  function setSleeping(val) {
+    isSleeping = val;
+
+    // Cancel any running green timer
+    if (greenTimer) { clearTimeout(greenTimer); greenTimer = null; }
+
+    if (val) {
+      bodyFills.forEach(el => el.style.fill = '#e57373');
+      faceFills.forEach(el => el.style.fill = '#ef9a9a');
+      eyesOpen.style.opacity   = '0';
+      eyesClosed.style.opacity = '1';
+      zzzSpans.forEach(z => z.style.display = 'inline');
+      statusEl.textContent = 'Schaapje slaapt 🌙';
+      statusEl.style.color = '#e57373';
+    } else {
+      // Awake, green for 8 minutes
+      bodyFills.forEach(el => el.style.fill = '#81c784');
+      faceFills.forEach(el => el.style.fill = '#a5d6a7');
+      eyesOpen.style.opacity   = '1';
+      eyesClosed.style.opacity = '0';
+      zzzSpans.forEach(z => z.style.display = 'none');
+      statusEl.textContent = 'Schaapje is wakker 🌞';
+      statusEl.style.color = 'var(--green)';
+
+      // Back to neutral after 8 minutes (480 000 ms)
+      greenTimer = setTimeout(() => {
+        bodyFills.forEach(el => el.style.fill = '#f0f0f0');
+        faceFills.forEach(el => el.style.fill = '#ffe0c8');
+        statusEl.textContent = 'Schaapje is wakker 🌞';
+        statusEl.style.color = 'var(--muted)';
+        greenTimer = null;
+      }, 8 * 60 * 1000);
+    }
+  }
+
+  // ── Alarm ────────────────────────────────────────────────────────────────
+  function triggerAlarm() {
+    alarmRinging = true;
+    container.classList.add('ringing');
+    setSleeping(false);
+    snoozeBtn.style.display = 'inline-block';
+    setTimeout(() => stopAlarm(), 60000);
+  }
+
+  function stopAlarm() {
+    alarmRinging = false;
+    container.classList.remove('ringing');
+    snoozeBtn.style.display = 'none';
+  }
+
+  function snooze() {
+    const mins = parseInt(document.getElementById('snooze-min').value) || 5;
+    snoozeUntil = new Date(Date.now() + mins * 60000);
+    stopAlarm();
+    setSleeping(true);
+    statusEl.textContent = `Snooze voor ${mins} min 💤`;
+  }
+
+  // ── Toggle buttons ───────────────────────────────────────────────────────
+  function toggleSleep() {
+    sleepEnabled = !sleepEnabled;
+    const btn   = document.getElementById('sleep-toggle');
+    const badge = document.getElementById('sleep-badge');
+    if (sleepEnabled) {
+      btn.textContent = 'Aan'; btn.className = 'toggle-btn btn-on';
+      badge.textContent = 'actief'; badge.className = 'badge badge-active';
+    } else {
+      btn.textContent = 'Uit'; btn.className = 'toggle-btn btn-off';
+      badge.textContent = 'inactief'; badge.className = 'badge badge-inactive';
+      if (isSleeping) setSleeping(false);
+    }
+  }
+
+  function toggleAlarm() {
+    alarmEnabled = !alarmEnabled;
+    const btn   = document.getElementById('alarm-toggle');
+    const badge = document.getElementById('alarm-badge');
+    if (alarmEnabled) {
+      btn.textContent = 'Aan'; btn.className = 'toggle-btn btn-on';
+      badge.textContent = 'actief'; badge.className = 'badge badge-active';
+    } else {
+      btn.textContent = 'Uit'; btn.className = 'toggle-btn btn-off';
+      badge.textContent = 'inactief'; badge.className = 'badge badge-inactive';
+      if (alarmRinging) stopAlarm();
+    }
+  }
+</script>
+</body>
+</html>
